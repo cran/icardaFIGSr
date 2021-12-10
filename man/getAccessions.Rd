@@ -71,7 +71,7 @@ Types of crops available include:
 if(interactive()){
  # Obtain accession data for durum wheat
  durum <- getAccessions(crop = 'Durum wheat', coor = TRUE)
- }
+}
 }
 \author{
 Khadija Aouzal, Amal Ibnelhobyb, Zakaria Kehel, Fawzy Nawar

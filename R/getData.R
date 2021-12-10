@@ -1,41 +1,38 @@
 .icardaFIGSEnv <- new.env(parent = emptyenv())
 
-#' GUI for getting username and password from user
-#' @return No return value
-#' @import gWidgets2 gWidgets2RGtk2 RGtk2
-#' 
+# GUI for getting username and password from user
 
 .authenticate <- function(){
-  options(guiToolkit="RGtk2")
+  tt <- tcltk::tktoplevel()
+  tcltk::tkwm.title(tt, "Login")
   
-  w <- gWidgets2::gbasicdialog(title = "Login", width = 400, 
-                               height = 400, do.buttons = FALSE)
-  g1 <- gWidgets2::ggroup(horizontal=FALSE, cont=w)
-  user.group = gWidgets2::ggroup(horizontal=TRUE, container = g1, expand=TRUE)
-  lbl_username <- gWidgets2::glabel(container = user.group, text="Username: ")
-  txt_username <- gWidgets2::gedit(cont = user.group)
-
-  pwd.group = gWidgets2::ggroup(horizontal=TRUE, container = g1, expand=TRUE)
-  lbl_password <- gWidgets2::glabel(container = pwd.group, text = "Password: ")
-  txt_password <- gWidgets2::gedit(cont = pwd.group)
-  gWidgets2::visible(txt_password) <- FALSE
+  ss <- "Please enter username and password"
+  tcltk::tkgrid(tcltk::tklabel(tt, text = ss), columnspan = 2, padx = 50, pady = 10)
   
+  usr <- tcltk::tclVar("")
+  pwd <- tcltk::tclVar("")
   
-  btn.group = gWidgets2::ggroup(horizontal=TRUE, container = g1, expand=TRUE)
-  btn_login <- gWidgets2::gbutton(container = btn.group,  text = "Login")
+  usr_label <- tcltk::tklabel(tt, text = "Username:")
+  pwd_label <- tcltk::tklabel(tt, text = "Password:")
   
-  gWidgets2::addHandlerClicked(btn_login, function(h,...) {
+  usr_input <- tcltk::tkentry(tt, width = "30", textvariable = usr)
+  pwd_input <- tcltk::tkentry(tt, width = "30", textvariable = pwd, show = "*")
   
-    username <- gWidgets2::svalue(txt_username)
-    password <- gWidgets2::svalue(txt_password)
+  tcltk::tkgrid(usr_label, usr_input, sticky = "ew", padx = 5)
+  tcltk::tkgrid(pwd_label, pwd_input, sticky = "ew", padx = 5)
   
-    .credentials <- list("username" = username, "password" = password)
+  on_okay <- function() {
+    .credentials <- list("username" = tcltk::tclvalue(usr), "password" = tcltk::tclvalue(pwd))
     assign(".credentials", .credentials, envir = .icardaFIGSEnv)
-
-    gWidgets2::dispose(w)
-   })
+    tcltk::tkdestroy(tt)
+  }
   
-  gWidgets2::visible(w) <- TRUE
+  ok_button <- tcltk::tkbutton(tt, text = " OK ", command = on_okay)
+  tcltk::tkbind(pwd_input, "<Return>", on_okay)
+  tcltk::tkgrid(ok_button, columnspan = 2, pady = 5)
+  
+  tcltk::tkfocus(tt)
+  tcltk::tkwait.window(tt)
   
 }
 
@@ -83,7 +80,7 @@
 #' if(interactive()){
 #'  # Obtain accession data for durum wheat
 #'  durum <- getAccessions(crop = 'Durum wheat', coor = TRUE)
-#'  }
+#' }
 #' @rdname getAccessions
 #' @export
 #' @importFrom httr handle POST content
@@ -200,7 +197,7 @@ getAccessions <- function(crop = "", ori = NULL, IG = "", doi = FALSE, taxon = F
 getTraits <- function(crop) {
   
   if (missing(crop)) {
-    message("Please specify a crop from the list below:")
+    print("Please specify a crop from the list below:")
     return(getCrops())
   } else {
     
@@ -257,7 +254,7 @@ getTraitsData <- function(IG, traitID) {
   
   IG = paste(IG, collapse = ',')
   if(traitID == "") {
-    message("Error: Please provide a valid traitID")
+    print("Error: Please provide a valid traitID")
     result = NULL
   } else {
     

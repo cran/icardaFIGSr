@@ -20,6 +20,6 @@ if(interactive()){
 }
 }
 \references{
-\href{http://www.fao.org/3/aq361e/aq361e.pdf}{HWSD}
+\href{https://www.fao.org/3/aq361e/aq361e.pdf}{HWSD}
 }
 \keyword{datasets}

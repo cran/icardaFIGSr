@@ -51,12 +51,13 @@
 #' @importFrom stats resid
 #' @importFrom foreach registerDoSEQ
 #' @importFrom doParallel registerDoParallel
+#' @importFrom parallel detectCores makeCluster stopCluster
 
 
 tuneTrain <- function (data, y, p = 0.7, method = method, parallelComputing = FALSE,
-                        length = 10, control = "repeatedcv", number = 10, 
-                        repeats = 10, process = c('center', 'scale'),
-                        summary= multiClassSummary,positive, ...) 
+                       length = 10, control = "repeatedcv", number = 10, 
+                       repeats = 10, process = c('center', 'scale'),
+                       summary= multiClassSummary,positive, ...) 
 {
     set.seed(1234) 
     x = data[which(colnames(data)!= y)]
@@ -72,8 +73,6 @@ tuneTrain <- function (data, y, p = 0.7, method = method, parallelComputing = FA
     trainy = trainset[[y]]
     testx = testset[colnames(testset) %in% colnames(x)]
     testy = testset[[y]]
-    
-    requireNamespace("caret")
 
     if (parallelComputing == TRUE) {
         cores <- parallel::detectCores()
@@ -87,13 +86,13 @@ tuneTrain <- function (data, y, p = 0.7, method = method, parallelComputing = FA
         tune.mod = caret::train(trainx, trainy, method = method, 
                                 tuneLength = length, trControl = ctrl, preProcess = process , ...)
         train.mod <- tune.mod
-        message(tune.mod)
+        
     }
     else if (method == "nnet") {
         tune.mod = caret::train(trainx, trainy, method = method, 
                                 tuneLength = length, trControl = ctrl, 
                                 preProcess = process, trace = FALSE)
-        message(tune.mod)
+        
         size <- tune.mod[["bestTune"]][["size"]]
         
         if (size - 1 <= 0) {
@@ -115,12 +114,12 @@ tuneTrain <- function (data, y, p = 0.7, method = method, parallelComputing = FA
         train.mod = caret::train(trainx, trainy, method, 
                                  tuneGrid = tuneGrid, tuneLength = length, trControl = ctrl2, 
                                  preProcess = process, trace = FALSE, ...)
-        message(train.mod)
+        
     }
     else {
         tune.mod = caret::train(trainx, trainy, method = method, 
                                 tuneLength = length, trControl = ctrl, preProcess = process)
-        message(tune.mod)
+        
         
         if (method == "knn") {
             k <- tune.mod[["bestTune"]][["k"]]
@@ -170,17 +169,17 @@ tuneTrain <- function (data, y, p = 0.7, method = method, parallelComputing = FA
         train.mod = caret::train(trainx, trainy, method, 
                                  tuneGrid = tuneGrid, tuneLength = length, trControl = ctrl2, 
                                  preProcess = process, ...)
-        message(train.mod)
+        
     }
     if (parallelComputing == TRUE) {
         parallel::stopCluster(cls)
-        foreach::registerDoSEQ()
+        registerDoSEQ()
         
     } 
     
     if (is.factor(data[[y]])) {
         if (missing(positive)) {
-            warning("The positive class is not defined!", immediate. = TRUE, noBreaks. = TRUE)
+            warning("The positive class is not defined!", immediate. = TRUE, noBreaks. = T)
             positive <- readline(prompt="Please define the positive class for the target variable: ")
         }
         prob.mod = as.data.frame(caret::predict.train(train.mod,testx, type = "prob"))
@@ -195,48 +194,35 @@ tuneTrain <- function (data, y, p = 0.7, method = method, parallelComputing = FA
             ggplot2::scale_fill_brewer(palette = "Dark2") + 
             ggplot2::labs(y = "Count")
         negative = prob.mod[, !names(prob.mod) %in% positive]
-        g1 = ggplot2::ggplot(prob.mod, ggplot2::aes(m = negative, 
-                                                    d = testy)) + plotROC::geom_roc(n.cuts = 0) + 
-            ggplot2::coord_equal() + plotROC::style_roc()
-        plot.roc = g1 + ggplot2::annotate("text", x = 0.75, 
-                                          y = 0.25, label = paste("AUC =", 
-                                                                  round(plotROC::calc_auc(g1)$AUC, 4)))
-        auc = round(plotROC::calc_auc(g1)$AUC, 4)
-        
-        x = list(Tuning = tune.mod, 
-                 Model = train.mod, 
-                 `Class Probabilities` = prob.mod, 
-                 `Class Probabilities Plot` = prob.plot, 
-                 `Area Under ROC Curve` = auc, 
-                 `ROC Curve` = plot.roc,
-                 `TrainingIndex`= Train_Index,
-                 `Training Data` = trainset, 
-                 `Test Data` = testset)
-        return(x)
-    }
-    else if (is.numeric(data[[y]])) {
-        if (missing(positive)) {
-            warning("The positive class is not defined!", immediate. = TRUE, noBreaks. = TRUE)
-            positive <- readline(prompt="Please define the positive class for the target variable: ")
+        if (length(levels(data[,c(1)])) == 2) {
+            g1 = ggplot2::ggplot(prob.mod, ggplot2::aes(m = negative, 
+                                                        d = testy)) + plotROC::geom_roc(n.cuts = 0) + 
+                ggplot2::coord_equal() + plotROC::style_roc()
+            plot.roc = g1 + ggplot2::annotate("text", x = 0.75, 
+                                              y = 0.25, label = paste("AUC =", 
+                                                                      round(plotROC::calc_auc(g1)$AUC, 4)))
+            auc = round(plotROC::calc_auc(g1)$AUC, 4)
+            x = list(Tuning = tune.mod, 
+                     Model = train.mod, 
+                     `Class Probabilities` = prob.mod, 
+                     `Class Probabilities Plot` = prob.plot, 
+                     `Area Under ROC Curve` = auc, 
+                     `ROC Curve` = plot.roc,
+                     `TrainingIndex`= Train_Index,
+                     `Training Data` = trainset, 
+                     `Test Data` = testset)
         }
-        resids = resid(train.mod)
-        pred.mod = caret::predict.train(train.mod, testx, 
-                                        type = "raw")
-        respred.df = data.frame(Residuals = resids, Predicted = pred.mod)
-        respred.plot1 = ggplot2::ggplot(respred.df, ggplot2::aes(x = Predicted, 
-                                                                 y = Residuals))
-        respred.plot2 = respred.plot + ggplot2::geom_point(respred.df, 
-                                                           ggplot2::aes(x = Predicted, y = Residuals)) + 
-            ggplot2::theme_bw() + ggplot2::labs(x = "Predicted", 
-                                                y = "Residuals")
         
-        x = list(Tuning = tune.mod, 
-                 Model = train.mod, 
-                 Predictions = pred.mod, 
-                 `Residuals Vs. Predicted Plot` = respred.plot2, 
-                 `TrainingIndex`= Train_Index,
-                 `Training Data` = trainset, 
-                 `Test Data` = testset)
+        else if(length(levels(data[,c(1)])) != 2){
+            x = list(Tuning = tune.mod, 
+                     Model = train.mod, 
+                     `Class Probabilities` = prob.mod, 
+                     `Class Probabilities Plot` = prob.plot, 
+                     `TrainingIndex`= Train_Index,
+                     `Training Data` = trainset, 
+                     `Test Data` = testset)
+        }
+        
         return(x)
     }
 }

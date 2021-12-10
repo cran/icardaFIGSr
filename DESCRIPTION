@@ -2,7 +2,7 @@ Package: icardaFIGSr
 Type: Package
 Title: Subsetting using Focused Identification of the Germplasm
         Strategy (FIGS)
-Version: 1.0.1
+Version: 1.0.2
 Authors@R: 
   c(person(given = "Khadija",
            family = "Aziz",
@@ -32,13 +32,12 @@ Description: Running Focused Identification of the Germplasm Strategy (FIGS) to 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Imports: caret, doParallel, dplyr, ggplot2, RGtk2, gWidgets2RGtk2,
-        gWidgets2, foreach, httr, magrittr, methods, plotROC, plyr,
-        raster, reshape2, sp, leaflet
+Imports: caret, doParallel, dplyr, ggplot2,foreach, httr, magrittr,
+        methods, plotROC, plyr, raster, reshape2, sp, leaflet
 RoxygenNote: 7.1.1
 Suggests:
 NeedsCompilation: no
-Packaged: 2021-08-04 16:22:08 UTC; azizk
+Packaged: 2021-12-10 09:51:06 UTC; azizk
 Depends: R (>= 3.5.0)
 Author: Khadija Aziz [aut],
   Zakaria Kehel [aut, cre],
@@ -49,4 +48,4 @@ Author: Khadija Aziz [aut],
   Fawzy Nawar [ctb]
 Maintainer: Zakaria Kehel <z.kehel@cgiar.org>
 Repository: CRAN
-Date/Publication: 2021-08-05 08:40:02 UTC
+Date/Publication: 2021-12-10 12:10:02 UTC
